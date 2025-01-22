@@ -1,0 +1,111 @@
+import { Sequelize, DataTypes, Op } from "sequelize";
+
+const sequelize = new Sequelize({
+  dialect: "sqlite",
+  storage: "./database.sqlite",
+  define: {
+    timestamps: false,
+  }
+})
+
+const Student = sequelize.define(
+  "student",
+  {
+    student_id: {
+			type: DataTypes.INTEGER,
+			primaryKey: true,
+			autoIncrement: true,
+		},
+		name: {
+			type: DataTypes.STRING,
+			allowNull: false,
+			validate: {
+				len: [4, 20]
+			}
+		},
+		favorite_class: {
+			type: DataTypes.STRING(25),
+      defaultValue: 'Computer Science'
+		},
+		school_year: {
+			type: DataTypes.INTEGER,
+			allowNull: false,
+		},
+    has_language_examination: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: true
+    }
+  }
+);
+
+// Student.sync({ force: true })
+// 	.then(() => {
+// 		return Student.bulkCreate([
+//       { name: "Naruto",favorite_class: 'Computer Science',school_year: 2,has_language_examination: true },
+//       { name: "Sasuke",favorite_class: 'Hado no 33',school_year: 3, has_language_examination: false },
+//       { name: "Temari",favorite_class: 'Computer Science',school_year: 2, has_language_examination:  true },
+//       { name: "Gaara",favorite_class: 'Hado no 99',school_year: 5, has_language_examination: false },
+//       { name: "Kim Kardashian",favorite_class: 'Ajax',school_year: 2, has_language_examination: false },
+//     ],
+//     { 
+//       validate: true
+//     }
+//   );
+// });
+
+// a) Kérd le azon díákok neveit, akiknek a kedvenc tantágya a Computer Science vagy van nyelvvizsgája
+Student.sync({ alter: true })
+	.then(() => {
+    return Student.findAll({
+      attributes: [
+				["name"]
+			],
+      where: {[Op.or]: {favorite_class: 'Computer Science', has_language_examination: true }}});
+  	})
+    .then((data) => {
+      data.forEach((element) => {
+        console.log(element.username); // Output the usernames
+      });
+    })
+    .catch((err) => {
+      console.log(`Error: ${err.message}`);
+    });
+
+
+// //b) num_students aliassal írasd ki évfolyamonként a tanulók számát (COUNT)
+// Student.sync({ alter: true})
+
+Student.sync({ alter: true })
+  .then(() => {
+    return Student.findAll({
+      attributes: [
+        'school_year', 
+        [sequelize.fn('COUNT', sequelize.col('student_id')), 'num_students']
+      ],
+      group: ['school_year'] 
+    });
+  })
+  .then((data) => {
+    data.forEach((element) => {
+      console.log(element.toJSON()); 
+    });
+  })
+  .catch((err) => {
+    console.log(`Error: ${err.message}`);
+  });
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
